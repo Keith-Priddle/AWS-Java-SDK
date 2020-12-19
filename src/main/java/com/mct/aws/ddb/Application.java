@@ -10,8 +10,10 @@ import com.amazonaws.regions.Regions;
 import software.amazon.awssdk.core.waiters.WaiterResponse;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
+import software.amazon.awssdk.services.dynamodb.model.AttributeAction;
 import software.amazon.awssdk.services.dynamodb.model.AttributeDefinition;
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
+import software.amazon.awssdk.services.dynamodb.model.AttributeValueUpdate;
 import software.amazon.awssdk.services.dynamodb.model.CreateTableRequest;
 import software.amazon.awssdk.services.dynamodb.model.CreateTableResponse;
 import software.amazon.awssdk.services.dynamodb.model.DescribeTableRequest;
@@ -25,6 +27,7 @@ import software.amazon.awssdk.services.dynamodb.model.ProvisionedThroughput;
 import software.amazon.awssdk.services.dynamodb.model.PutItemRequest;
 import software.amazon.awssdk.services.dynamodb.model.ResourceNotFoundException;
 import software.amazon.awssdk.services.dynamodb.model.ScalarAttributeType;
+import software.amazon.awssdk.services.dynamodb.model.UpdateItemRequest;
 import software.amazon.awssdk.services.dynamodb.waiters.DynamoDbWaiter;
 
 public class Application {
@@ -149,6 +152,41 @@ public class Application {
 		return "";
 	}
 	
+	/*
+	 * Update an existing item in the table
+	 */
+	public static void updateItem(DynamoDbClient ddb, String tableName, String key, String keyVal, String name, String updateVal) {
+	
+		HashMap<String, AttributeValue> keyToGet = new HashMap<String, AttributeValue>();
+		
+		keyToGet.put(key, AttributeValue.builder()
+				.s(keyVal).build());
+		
+		HashMap<String, AttributeValueUpdate> updatedValues = new HashMap<String, AttributeValueUpdate>();
+		updatedValues.put(name, AttributeValueUpdate.builder()
+				.value(AttributeValue.builder().s(updateVal).build())
+				.action(AttributeAction.PUT)
+				.build());
+		
+		
+		UpdateItemRequest request = UpdateItemRequest.builder()
+				.tableName(tableName)
+				.key(keyToGet)
+				.attributeUpdates(updatedValues)
+				.build();
+		
+		try {
+			ddb.updateItem(request);
+			
+		} catch (Exception e) {
+			System.err.println(e.getMessage());
+			System.exit(1);
+		}
+		
+		
+	}
+	 
+	
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
 		Region region = Region.EU_WEST_2;	
@@ -159,6 +197,7 @@ public class Application {
 		//System.out.println(Application.createTable(ddb, PRIMARY_DB, KEY));
 		//Application.putItemInTable(ddb, PRIMARY_DB,"id", "3", "quote", "Whoop...whooop...whoooop!!!");
 		Application.getItemsFromTable(ddb, PRIMARY_DB, "id", "3");
+		Application.updateItem(ddb, PRIMARY_DB, "id", "2", "quote", "Ho.. Ho.. Ho...");
 	}
 
 	
